@@ -1,0 +1,25 @@
+Set-Content -Path .gitignore -Value @"
+# Flutter build artifacts
+.dart_tool/
+.flutter-plugins
+.flutter-plugin-dependencies
+.packages
+build/
+
+# Executables
+*.apk
+*.aab
+*.app
+*.ipa
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+
+# Firebase secrets
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+ios/firebase_app_id_file.json
+lib/firebase_options.dart
+"@

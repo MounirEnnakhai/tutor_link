@@ -1,0 +1,53 @@
+include: package:flutter_lints/flutter.yaml
+
+linter:
+  rules:
+    # Style
+    always_declare_return_types: true
+    always_put_required_named_parameters_first: true
+    annotate_overrides: true
+    avoid_empty_else: true
+    avoid_print: true
+    avoid_redundant_argument_values: false
+    avoid_relative_lib_imports: true
+    avoid_returning_null_for_future: true
+    avoid_slow_async_io: true
+    avoid_types_as_parameter_names: true
+    avoid_unnecessary_containers: true
+    avoid_web_libraries_in_flutter: true
+    cancel_subscriptions: true
+    close_sinks: true
+    control_flow_in_finally: true
+    depend_on_referenced_packages: true
+    empty_statements: true
+    hash_and_equals: true
+    no_duplicate_case_values: true
+    no_logic_in_create_state: true
+    prefer_const_constructors: true
+    prefer_const_declarations: true
+    prefer_final_fields: true
+    prefer_final_locals: true
+    prefer_if_null_operators: true
+    prefer_is_empty: true
+    prefer_is_not_empty: true
+    prefer_single_quotes: true
+    prefer_spread_collections: true
+    sized_box_for_whitespace: true
+    sort_child_properties_last: true
+    unnecessary_brace_in_string_interps: true
+    unnecessary_const: true
+    unnecessary_new: true
+    unnecessary_null_checks: true
+    unnecessary_string_interpolations: true
+    use_key_in_widget_constructors: true
+    use_super_parameters: true
+
+analyzer:
+  errors:
+    missing_required_param: error
+    missing_return: error
+    dead_code: warning
+  exclude:
+    - '**/*.g.dart'
+    - '**/*.freezed.dart'
+    - lib/firebase_options.dart

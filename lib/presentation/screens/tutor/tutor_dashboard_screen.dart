@@ -47,8 +47,9 @@ class _TutorDashboardScreenState extends ConsumerState<TutorDashboardScreen>
         data: (tutor) => NestedScrollView(
           headerSliverBuilder: (context, _) => [
             SliverAppBar(
-              expandedHeight: 180,
+              expandedHeight: 260,
               pinned: true,
+              collapsedHeight: 60,
               flexibleSpace: FlexibleSpaceBar(
                 background: Container(
                   decoration: const BoxDecoration(
@@ -56,7 +57,7 @@ class _TutorDashboardScreenState extends ConsumerState<TutorDashboardScreen>
                   ),
                   child: SafeArea(
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 56),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.end,
@@ -105,14 +106,14 @@ class _TutorDashboardScreenState extends ConsumerState<TutorDashboardScreen>
                               ),
                             ],
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 20),
                           if (tutor != null)
                             Row(
                               children: [
                                 _DashStat(
                                     label: 'Rating',
-                                    value:
-                                    tutor.rating.toStringAsFixed(1)),
+                                    value: tutor.rating
+                                        .toStringAsFixed(1)),
                                 _DashStat(
                                     label: 'Reviews',
                                     value: '${tutor.totalReviews}'),
@@ -140,7 +141,8 @@ class _TutorDashboardScreenState extends ConsumerState<TutorDashboardScreen>
                       context: context,
                       builder: (ctx) => AlertDialog(
                         title: const Text('Sign Out'),
-                        content: const Text('Are you sure you want to sign out?'),
+                        content: const Text(
+                            'Are you sure you want to sign out?'),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.pop(ctx, false),
@@ -157,7 +159,9 @@ class _TutorDashboardScreenState extends ConsumerState<TutorDashboardScreen>
                       ),
                     );
                     if (confirmed == true && context.mounted) {
-                      await ref.read(authNotifierProvider.notifier).signOut();
+                      await ref
+                          .read(authNotifierProvider.notifier)
+                          .signOut();
                       context.go(AppRoutes.login);
                     }
                   },
@@ -184,10 +188,7 @@ class _TutorDashboardScreenState extends ConsumerState<TutorDashboardScreen>
           body: TabBarView(
             controller: _tabController,
             children: [
-              // Tab 1 — My Offers
               _MyOffersTab(tutor: tutor),
-
-              // Tab 2 — Student Requests
               const _StudentRequestsTab(),
             ],
           ),
@@ -218,7 +219,6 @@ class _MyOffersTab extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        // Quick Actions
         Text('Quick Actions',
             style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 12),
@@ -263,11 +263,9 @@ class _MyOffersTab extends ConsumerWidget {
         ),
         const SizedBox(height: 20),
 
-        // Profile completeness warning
         if (tutor.biography.isEmpty || tutor.subjects.isEmpty)
           _ProfileCompletenessCard(tutor: tutor),
 
-        // Active offers
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -350,16 +348,24 @@ class _StudentRequestsTab extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(Icons.inbox_outlined,
-                    size: 64, color: AppTheme.grey300),
+                    size: 64,
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withOpacity(0.3)),
                 const SizedBox(height: 16),
                 Text('No student requests yet',
                     style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   'When students post learning requests\nthey will appear here.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                      color: AppTheme.grey500, fontFamily: 'Poppins'),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withOpacity(0.5),
+                      fontFamily: 'Poppins'),
                 ),
               ],
             ),
@@ -367,12 +373,14 @@ class _StudentRequestsTab extends ConsumerWidget {
         }
 
         return RefreshIndicator(
-          onRefresh: () async => ref.invalidate(studentRequestsProvider),
+          onRefresh: () async =>
+              ref.invalidate(studentRequestsProvider),
           child: ListView.separated(
             padding: const EdgeInsets.all(16),
             itemCount: requests.length,
             separatorBuilder: (_, __) => const SizedBox(height: 10),
-            itemBuilder: (_, i) => StudentRequestCard(request: requests[i]),
+            itemBuilder: (_, i) =>
+                StudentRequestCard(request: requests[i]),
           ),
         );
       },
@@ -414,11 +422,12 @@ class _QuickAction extends StatelessWidget {
   final String label;
   final Color color;
   final VoidCallback onTap;
-  const _QuickAction(
-      {required this.icon,
-        required this.label,
-        required this.color,
-        required this.onTap});
+  const _QuickAction({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -459,7 +468,8 @@ class _ProfileCompletenessCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppTheme.warningColor.withOpacity(0.1),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.warningColor.withOpacity(0.3)),
+        border:
+        Border.all(color: AppTheme.warningColor.withOpacity(0.3)),
       ),
       child: Row(
         children: [
@@ -476,8 +486,10 @@ class _ProfileCompletenessCard extends StatelessWidget {
             ),
           ),
           TextButton(
-            onPressed: () => context.push(AppRoutes.tutorProfileEdit),
-            child: const Text('Complete', style: TextStyle(fontSize: 12)),
+            onPressed: () =>
+                context.push(AppRoutes.tutorProfileEdit),
+            child:
+            const Text('Complete', style: TextStyle(fontSize: 12)),
           ),
         ],
       ),
@@ -489,30 +501,43 @@ class _VerificationBadge extends StatelessWidget {
   final dynamic status;
   const _VerificationBadge({required this.status});
 
+  String get _statusString {
+    if (status == null) return 'notSubmitted';
+    try {
+      return status.name as String;
+    } catch (_) {
+      return status.toString();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final label = status.name == 'verified'
+    final s = _statusString;
+    final label = s == 'verified'
         ? '✓ Verified'
-        : status.name == 'pending'
+        : s == 'pending'
         ? '⏳ Pending'
         : 'Not Verified';
-    final color = status.name == 'verified'
+    final color = s == 'verified'
         ? AppTheme.successColor
-        : status.name == 'pending'
+        : s == 'pending'
         ? AppTheme.warningColor
         : AppTheme.grey400;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         color: color.withOpacity(0.2),
         borderRadius: BorderRadius.circular(6),
       ),
-      child: Text(label,
-          style: TextStyle(
-              color: color,
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              fontFamily: 'Poppins')),
+      child: Text(
+        label,
+        style: TextStyle(
+            color: color,
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            fontFamily: 'Poppins'),
+      ),
     );
   }
 }

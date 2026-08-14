@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-
 import '../../domain/entities/user_entity.dart';
 
 class UserModel extends UserEntity {
@@ -14,6 +13,10 @@ class UserModel extends UserEntity {
     super.updatedAt,
     super.phoneNumber,
     super.isActive,
+    super.isProfileComplete,
+    super.educationLevel,
+    super.grade,
+    super.city,
   });
 
   factory UserModel.fromFirestore(DocumentSnapshot doc) {
@@ -29,6 +32,10 @@ class UserModel extends UserEntity {
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
       phoneNumber: data['phoneNumber'],
       isActive: data['isActive'] ?? true,
+      isProfileComplete: data['isProfileComplete'] ?? false,
+      educationLevel: data['educationLevel'],
+      grade: data['grade'],
+      city: data['city'],
     );
   }
 
@@ -44,6 +51,10 @@ class UserModel extends UserEntity {
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
       phoneNumber: data['phoneNumber'],
       isActive: data['isActive'] ?? true,
+      isProfileComplete: data['isProfileComplete'] ?? false,
+      educationLevel: data['educationLevel'],
+      grade: data['grade'],
+      city: data['city'],
     );
   }
 
@@ -58,17 +69,18 @@ class UserModel extends UserEntity {
       'updatedAt': updatedAt != null ? Timestamp.fromDate(updatedAt!) : null,
       'phoneNumber': phoneNumber,
       'isActive': isActive,
+      'isProfileComplete': isProfileComplete,
+      'educationLevel': educationLevel,
+      'grade': grade,
+      'city': city,
     };
   }
 
   static UserRole _parseRole(String? role) {
     switch (role) {
-      case 'tutor':
-        return UserRole.tutor;
-      case 'admin':
-        return UserRole.admin;
-      default:
-        return UserRole.student;
+      case 'tutor': return UserRole.tutor;
+      case 'admin': return UserRole.admin;
+      default: return UserRole.student;
     }
   }
 
@@ -83,6 +95,10 @@ class UserModel extends UserEntity {
     DateTime? updatedAt,
     String? phoneNumber,
     bool? isActive,
+    bool? isProfileComplete,
+    String? educationLevel,
+    String? grade,
+    String? city,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -95,6 +111,10 @@ class UserModel extends UserEntity {
       updatedAt: updatedAt ?? this.updatedAt,
       phoneNumber: phoneNumber ?? this.phoneNumber,
       isActive: isActive ?? this.isActive,
+      isProfileComplete: isProfileComplete ?? this.isProfileComplete,
+      educationLevel: educationLevel ?? this.educationLevel,
+      grade: grade ?? this.grade,
+      city: city ?? this.city,
     );
   }
 }

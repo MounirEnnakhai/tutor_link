@@ -13,6 +13,12 @@ class UserEntity extends Equatable {
   final DateTime? updatedAt;
   final String? phoneNumber;
   final bool isActive;
+  final bool isProfileComplete;
+
+  // Student specific
+  final String? educationLevel;
+  final String? grade;
+  final String? city;
 
   const UserEntity({
     required this.id,
@@ -25,6 +31,10 @@ class UserEntity extends Equatable {
     this.updatedAt,
     this.phoneNumber,
     this.isActive = true,
+    this.isProfileComplete = false,
+    this.educationLevel,
+    this.grade,
+    this.city,
   });
 
   UserEntity copyWith({
@@ -38,6 +48,10 @@ class UserEntity extends Equatable {
     DateTime? updatedAt,
     String? phoneNumber,
     bool? isActive,
+    bool? isProfileComplete,
+    String? educationLevel,
+    String? grade,
+    String? city,
   }) {
     return UserEntity(
       id: id ?? this.id,
@@ -50,6 +64,10 @@ class UserEntity extends Equatable {
       updatedAt: updatedAt ?? this.updatedAt,
       phoneNumber: phoneNumber ?? this.phoneNumber,
       isActive: isActive ?? this.isActive,
+      isProfileComplete: isProfileComplete ?? this.isProfileComplete,
+      educationLevel: educationLevel ?? this.educationLevel,
+      grade: grade ?? this.grade,
+      city: city ?? this.city,
     );
   }
 
@@ -59,14 +77,8 @@ class UserEntity extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        email,
-        fullName,
-        photoUrl,
-        role,
-        isEmailVerified,
-        createdAt,
-        phoneNumber,
-        isActive,
-      ];
+    id, email, fullName, photoUrl, role,
+    isEmailVerified, createdAt, phoneNumber,
+    isActive, isProfileComplete, educationLevel, grade, city,
+  ];
 }

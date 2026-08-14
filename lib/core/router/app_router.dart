@@ -10,6 +10,8 @@ import '../../presentation/screens/admin/verification_screen.dart';
 import '../../presentation/screens/auth/login_screen.dart';
 import '../../presentation/screens/auth/register_screen.dart';
 import '../../presentation/screens/auth/splash_screen.dart';
+import '../../presentation/screens/onboarding/student_onboarding_screen.dart';
+import '../../presentation/screens/onboarding/tutor_onboarding_screen.dart';
 import '../../presentation/screens/student/favorites_screen.dart';
 import '../../presentation/screens/student/home_screen.dart';
 import '../../presentation/screens/student/map_screen.dart';
@@ -29,6 +31,10 @@ class AppRoutes {
   static const String splash = '/';
   static const String login = '/login';
   static const String register = '/register';
+
+  // Onboarding
+  static const String studentOnboarding = '/onboarding/student';
+  static const String tutorOnboarding = '/onboarding/tutor';
 
   // Student
   static const String studentHome = '/student/home';
@@ -62,14 +68,32 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     debugLogDiagnostics: true,
     redirect: (context, state) {
       final isLoading = authState.isLoading;
-      final isAuthenticated = authState.valueOrNull != null;
-      final isSplash = state.matchedLocation == AppRoutes.splash;
-      final isAuthRoute = state.matchedLocation == AppRoutes.login ||
-          state.matchedLocation == AppRoutes.register;
+      final user = authState.valueOrNull;
+      final isAuthenticated = user != null;
+      final loc = state.matchedLocation;
 
       if (isLoading) return null;
-      if (isSplash) return null;
+
+      // Always allow splash
+      if (loc == AppRoutes.splash) return null;
+
+      // Not logged in → go to login
+      final isAuthRoute = loc == AppRoutes.login || loc == AppRoutes.register;
       if (!isAuthenticated && !isAuthRoute) return AppRoutes.login;
+      if (isAuthenticated && isAuthRoute) {
+        return _homeForUser(user);
+      }
+
+      // Logged in but profile not complete → onboarding
+      final isOnboarding = loc == AppRoutes.studentOnboarding ||
+          loc == AppRoutes.tutorOnboarding;
+
+      if (isAuthenticated && !user.isProfileComplete && !isOnboarding) {
+        if (user.isAdmin) return null; // admins skip onboarding
+        return user.isStudent
+            ? AppRoutes.studentOnboarding
+            : AppRoutes.tutorOnboarding;
+      }
 
       return null;
     },
@@ -93,6 +117,24 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => _slideTransition(
           state: state,
           child: const RegisterScreen(),
+        ),
+      ),
+
+      // ─── Onboarding ───────────────────────────────────────────────────────
+      GoRoute(
+        path: AppRoutes.studentOnboarding,
+        name: 'studentOnboarding',
+        pageBuilder: (context, state) => _slideTransition(
+          state: state,
+          child: const StudentOnboardingScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.tutorOnboarding,
+        name: 'tutorOnboarding',
+        pageBuilder: (context, state) => _slideTransition(
+          state: state,
+          child: const TutorOnboardingScreen(),
         ),
       ),
 
@@ -208,6 +250,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     errorBuilder: (context, state) => _ErrorScreen(error: state.error),
   );
 });
+
+String _homeForUser(UserEntity user) {
+  if (!user.isProfileComplete && !user.isAdmin) {
+    return user.isStudent
+        ? AppRoutes.studentOnboarding
+        : AppRoutes.tutorOnboarding;
+  }
+  switch (user.role) {
+    case UserRole.student: return AppRoutes.studentHome;
+    case UserRole.tutor: return AppRoutes.tutorDashboard;
+    case UserRole.admin: return AppRoutes.adminDashboard;
+  }
+}
 
 CustomTransitionPage<void> _fadeTransition({
   required GoRouterState state,

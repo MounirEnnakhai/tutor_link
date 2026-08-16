@@ -27,9 +27,11 @@ class ReviewEntity extends Equatable {
   List<Object?> get props => [id, tutorId, studentId, rating, comment];
 }
 
+// ─── Search Filter ────────────────────────────────────────────────────────────
+
 class SearchFilter extends Equatable {
   final String? subject;
-  final String? offerType; // 'private' | 'group' | null
+  final String? offerType;
   final double? minHourlyRate;
   final double? maxHourlyRate;
   final double? minMonthlyPrice;
@@ -40,7 +42,7 @@ class SearchFilter extends Equatable {
   final double? minRating;
   final String? teachingMode;
   final String? language;
-  final String? sortBy; // 'rating' | 'price_asc' | 'price_desc' | 'distance'
+  final String? sortBy;
 
   const SearchFilter({
     this.subject,
@@ -58,62 +60,72 @@ class SearchFilter extends Equatable {
     this.sortBy,
   });
 
+  // Sentinel so null can actually clear a field
+  static const _clear = Object();
+
   SearchFilter copyWith({
-    String? subject,
-    String? offerType,
-    double? minHourlyRate,
-    double? maxHourlyRate,
-    double? minMonthlyPrice,
-    double? maxMonthlyPrice,
-    double? maxDistanceKm,
-    bool? onlineOnly,
-    String? educationLevel,
-    double? minRating,
-    String? teachingMode,
-    String? language,
-    String? sortBy,
+    Object? subject = _clear,
+    Object? offerType = _clear,
+    Object? minHourlyRate = _clear,
+    Object? maxHourlyRate = _clear,
+    Object? minMonthlyPrice = _clear,
+    Object? maxMonthlyPrice = _clear,
+    Object? maxDistanceKm = _clear,
+    Object? onlineOnly = _clear,
+    Object? educationLevel = _clear,
+    Object? minRating = _clear,
+    Object? teachingMode = _clear,
+    Object? language = _clear,
+    Object? sortBy = _clear,
   }) {
     return SearchFilter(
-      subject: subject ?? this.subject,
-      offerType: offerType ?? this.offerType,
-      minHourlyRate: minHourlyRate ?? this.minHourlyRate,
-      maxHourlyRate: maxHourlyRate ?? this.maxHourlyRate,
-      minMonthlyPrice: minMonthlyPrice ?? this.minMonthlyPrice,
-      maxMonthlyPrice: maxMonthlyPrice ?? this.maxMonthlyPrice,
-      maxDistanceKm: maxDistanceKm ?? this.maxDistanceKm,
-      onlineOnly: onlineOnly ?? this.onlineOnly,
-      educationLevel: educationLevel ?? this.educationLevel,
-      minRating: minRating ?? this.minRating,
-      teachingMode: teachingMode ?? this.teachingMode,
-      language: language ?? this.language,
-      sortBy: sortBy ?? this.sortBy,
+      subject: subject == _clear ? this.subject : subject as String?,
+      offerType: offerType == _clear ? this.offerType : offerType as String?,
+      minHourlyRate: minHourlyRate == _clear
+          ? this.minHourlyRate
+          : minHourlyRate as double?,
+      maxHourlyRate: maxHourlyRate == _clear
+          ? this.maxHourlyRate
+          : maxHourlyRate as double?,
+      minMonthlyPrice: minMonthlyPrice == _clear
+          ? this.minMonthlyPrice
+          : minMonthlyPrice as double?,
+      maxMonthlyPrice: maxMonthlyPrice == _clear
+          ? this.maxMonthlyPrice
+          : maxMonthlyPrice as double?,
+      maxDistanceKm: maxDistanceKm == _clear
+          ? this.maxDistanceKm
+          : maxDistanceKm as double?,
+      onlineOnly:
+      onlineOnly == _clear ? this.onlineOnly : onlineOnly as bool?,
+      educationLevel: educationLevel == _clear
+          ? this.educationLevel
+          : educationLevel as String?,
+      minRating:
+      minRating == _clear ? this.minRating : minRating as double?,
+      teachingMode: teachingMode == _clear
+          ? this.teachingMode
+          : teachingMode as String?,
+      language: language == _clear ? this.language : language as String?,
+      sortBy: sortBy == _clear ? this.sortBy : sortBy as String?,
     );
   }
 
   bool get isEmpty =>
       subject == null &&
-      offerType == null &&
-      minHourlyRate == null &&
-      maxHourlyRate == null &&
-      maxDistanceKm == null &&
-      onlineOnly == null &&
-      educationLevel == null &&
-      minRating == null;
+          offerType == null &&
+          minHourlyRate == null &&
+          maxHourlyRate == null &&
+          maxDistanceKm == null &&
+          onlineOnly == null &&
+          educationLevel == null &&
+          minRating == null;
 
   @override
   List<Object?> get props => [
-        subject,
-        offerType,
-        minHourlyRate,
-        maxHourlyRate,
-        minMonthlyPrice,
-        maxMonthlyPrice,
-        maxDistanceKm,
-        onlineOnly,
-        educationLevel,
-        minRating,
-        teachingMode,
-        language,
-        sortBy,
-      ];
+    subject, offerType, minHourlyRate, maxHourlyRate,
+    minMonthlyPrice, maxMonthlyPrice, maxDistanceKm,
+    onlineOnly, educationLevel, minRating, teachingMode,
+    language, sortBy,
+  ];
 }

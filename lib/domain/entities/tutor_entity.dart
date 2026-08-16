@@ -124,13 +124,15 @@ class TutorEntity extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        userId,
-        fullName,
-        subjects,
-        rating,
-        totalReviews,
-        verificationStatus,
-        isActive,
-      ];
+    id,
+    userId,
+    fullName,
+    subjects,
+    rating,
+    totalReviews,
+    verificationStatus,
+    isActive,
+  ];
 }
+
+

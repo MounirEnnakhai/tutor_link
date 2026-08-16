@@ -239,6 +239,7 @@ StudentRequestEntity _requestFromDoc(DocumentSnapshot doc) {
     preferredMode: data['preferredMode'] ?? 'both',
     location: data['location'],
     educationLevel: data['educationLevel'] ?? '',
+    grade: data['grade'],
     status: data['status'] ?? 'open',
     createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
   );
@@ -255,6 +256,47 @@ FutureProvider<List<StudentRequestEntity>>((ref) async {
       .get();
 
   return query.docs.map(_requestFromDoc).toList();
+});
+
+// Filter state for tutor browsing requests
+class RequestFilter {
+  final String? subject;
+  final String? educationLevel;
+
+  const RequestFilter({this.subject, this.educationLevel});
+
+  bool get isEmpty => subject == null && educationLevel == null;
+
+  RequestFilter copyWith({String? subject, String? educationLevel}) {
+    return RequestFilter(
+      subject: subject,
+      educationLevel: educationLevel,
+    );
+  }
+}
+
+final requestFilterProvider =
+StateProvider<RequestFilter>((ref) => const RequestFilter());
+
+// Filtered requests — tutors use this
+final filteredRequestsProvider =
+Provider<AsyncValue<List<StudentRequestEntity>>>((ref) {
+  final requests = ref.watch(studentRequestsProvider);
+  final filter = ref.watch(requestFilterProvider);
+
+  return requests.whenData((list) {
+    var filtered = list;
+    if (filter.subject != null) {
+      filtered =
+          filtered.where((r) => r.subject == filter.subject).toList();
+    }
+    if (filter.educationLevel != null) {
+      filtered = filtered
+          .where((r) => r.educationLevel == filter.educationLevel)
+          .toList();
+    }
+    return filtered;
+  });
 });
 
 // Requests posted by the current student

@@ -85,6 +85,15 @@ class StudentRequestCard extends StatelessWidget {
                       label: request.type == 'group' ? 'Group' : 'Private',
                       color: AppTheme.secondaryColor,
                     ),
+                    if (request.educationLevel.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      _Badge(
+                        label: request.grade != null
+                            ? '${request.educationLevel} • ${request.grade}'
+                            : request.educationLevel,
+                        color: AppTheme.successColor,
+                      ),
+                    ],
                   ],
                 ),
               ],

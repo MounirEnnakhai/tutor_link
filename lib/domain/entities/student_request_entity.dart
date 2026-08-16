@@ -13,6 +13,7 @@ class StudentRequestEntity extends Equatable {
   final String preferredMode;
   final String? location;
   final String educationLevel;
+  final String? grade;
   final String status;
   final DateTime createdAt;
 
@@ -29,6 +30,7 @@ class StudentRequestEntity extends Equatable {
     required this.preferredMode,
     this.location,
     required this.educationLevel,
+    this.grade,
     this.status = 'open',
     required this.createdAt,
   });

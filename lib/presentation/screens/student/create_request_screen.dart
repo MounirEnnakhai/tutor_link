@@ -10,6 +10,13 @@ import '../../providers/tutor_provider.dart';
 import '../../widgets/common/app_button.dart';
 import '../../widgets/common/app_text_field.dart';
 
+const _gradeMap = {
+  'Primary': ['1st Grade', '2nd Grade', '3rd Grade', '4th Grade', '5th Grade', '6th Grade'],
+  'Middle School': ['1st Year', '2nd Year', '3rd Year'],
+  'High School': ['TC', '1ère Bac', '2ème Bac'],
+  'Academic': <String>[],
+};
+
 class CreateRequestScreen extends ConsumerStatefulWidget {
   const CreateRequestScreen({super.key});
 
@@ -29,6 +36,7 @@ class _CreateRequestScreenState extends ConsumerState<CreateRequestScreen> {
   String _type = 'private';
   String _mode = 'both';
   String _educationLevel = AppConstants.educationLevels.first;
+  String? _selectedGrade;
   bool _isSubmitting = false;
 
   @override
@@ -62,6 +70,7 @@ class _CreateRequestScreenState extends ConsumerState<CreateRequestScreen> {
         'preferredMode': _mode,
         'location': _locationCtrl.text.trim(),
         'educationLevel': _educationLevel,
+        'grade': _educationLevel == 'Academic' ? null : _selectedGrade,
         'status': 'open',
         'createdAt': FieldValue.serverTimestamp(),
       });
@@ -90,6 +99,9 @@ class _CreateRequestScreenState extends ConsumerState<CreateRequestScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final grades = _gradeMap[_educationLevel] ?? [];
+
     return Scaffold(
       appBar: AppBar(title: const Text('Post a Learning Request')),
       body: Form(
@@ -168,9 +180,55 @@ class _CreateRequestScreenState extends ConsumerState<CreateRequestScreen> {
               items: AppConstants.educationLevels
                   .map((l) => DropdownMenuItem(value: l, child: Text(l)))
                   .toList(),
-              onChanged: (v) => setState(() => _educationLevel = v!),
+              onChanged: (v) => setState(() {
+                _educationLevel = v!;
+                _selectedGrade = null; // reset grade when level changes
+              }),
             ),
             const SizedBox(height: 16),
+
+            // Grade — only show if level has grades
+            if (grades.isNotEmpty) ...[
+              AppDropdownField<String>(
+                label: 'Grade',
+                value: _selectedGrade ?? grades.first,
+                prefixIcon: Icons.grade_outlined,
+                items: grades
+                    .map((g) => DropdownMenuItem(value: g, child: Text(g)))
+                    .toList(),
+                onChanged: (v) => setState(() => _selectedGrade = v),
+              ),
+              const SizedBox(height: 16),
+            ],
+
+            // Academic notice
+            if (_educationLevel == 'Academic') ...[
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withOpacity(0.06),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.info_outline_rounded,
+                        color: AppTheme.primaryColor, size: 16),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Academic level — university and higher education.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppTheme.primaryColor,
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
 
             // Max Budget
             AppTextField(
@@ -183,8 +241,7 @@ class _CreateRequestScreenState extends ConsumerState<CreateRequestScreen> {
             const SizedBox(height: 20),
 
             // Type selector
-            Text('Lesson Type',
-                style: Theme.of(context).textTheme.titleSmall),
+            Text('Lesson Type', style: theme.textTheme.titleSmall),
             const SizedBox(height: 10),
             Row(
               children: [
@@ -206,8 +263,7 @@ class _CreateRequestScreenState extends ConsumerState<CreateRequestScreen> {
             const SizedBox(height: 16),
 
             // Preferred mode
-            Text('Preferred Mode',
-                style: Theme.of(context).textTheme.titleSmall),
+            Text('Preferred Mode', style: theme.textTheme.titleSmall),
             const SizedBox(height: 10),
             Row(
               children: [
@@ -272,15 +328,18 @@ class _SelectChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final unselectedBg = theme.colorScheme.onSurface.withOpacity(0.08);
+    final unselectedFg = theme.colorScheme.onSurface.withOpacity(0.7);
+
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        padding:
+        const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected
-              ? AppTheme.primaryColor
-              : AppTheme.grey100,
+          color: isSelected ? AppTheme.primaryColor : unselectedBg,
           borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
@@ -288,14 +347,14 @@ class _SelectChip extends StatelessWidget {
           children: [
             Icon(icon,
                 size: 16,
-                color: isSelected ? Colors.white : AppTheme.grey600),
+                color: isSelected ? Colors.white : unselectedFg),
             const SizedBox(width: 6),
             Text(
               label,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: isSelected ? Colors.white : AppTheme.grey600,
+                color: isSelected ? Colors.white : unselectedFg,
                 fontFamily: 'Poppins',
               ),
             ),

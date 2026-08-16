@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/constants/app_constants.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
@@ -94,7 +95,8 @@ class _TutorDashboardScreenState extends ConsumerState<TutorDashboardScreen>
                                     ),
                                     if (tutor != null)
                                       _VerificationBadge(
-                                          status: tutor.verificationStatus),
+                                          status:
+                                          tutor.verificationStatus),
                                   ],
                                 ),
                               ),
@@ -145,11 +147,13 @@ class _TutorDashboardScreenState extends ConsumerState<TutorDashboardScreen>
                             'Are you sure you want to sign out?'),
                         actions: [
                           TextButton(
-                            onPressed: () => Navigator.pop(ctx, false),
+                            onPressed: () =>
+                                Navigator.pop(ctx, false),
                             child: const Text('Cancel'),
                           ),
                           ElevatedButton(
-                            onPressed: () => Navigator.pop(ctx, true),
+                            onPressed: () =>
+                                Navigator.pop(ctx, true),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppTheme.errorColor,
                             ),
@@ -336,54 +340,211 @@ class _StudentRequestsTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final requestsAsync = ref.watch(studentRequestsProvider);
+    final requestsAsync = ref.watch(filteredRequestsProvider);
+    final filter = ref.watch(requestFilterProvider);
+    final theme = Theme.of(context);
 
-    return requestsAsync.when(
-      loading: () => const ShimmerList(count: 5),
-      error: (e, _) => Center(child: Text('Error: $e')),
-      data: (requests) {
-        if (requests.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.inbox_outlined,
-                    size: 64,
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurface
-                        .withOpacity(0.3)),
-                const SizedBox(height: 16),
-                Text('No student requests yet',
-                    style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 8),
-                Text(
-                  'When students post learning requests\nthey will appear here.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurface
-                          .withOpacity(0.5),
-                      fontFamily: 'Poppins'),
+    final subjects = AppConstants.subjects;
+    const levels = [
+      'Primary',
+      'Middle School',
+      'High School',
+      'Academic',
+    ];
+
+    return Column(
+      children: [
+        // ── Filter bar ──────────────────────────────────────────────
+        Container(
+          color: theme.colorScheme.surface,
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Subject chips
+              SizedBox(
+                height: 34,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: [
+                    _FilterChip(
+                      label: 'All Subjects',
+                      isSelected: filter.subject == null,
+                      onTap: () => ref
+                          .read(requestFilterProvider.notifier)
+                          .state = filter.copyWith(subject: null),
+                    ),
+                    const SizedBox(width: 8),
+                    ...subjects.map(
+                          (s) => Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: _FilterChip(
+                          label: s,
+                          isSelected: filter.subject == s,
+                          onTap: () => ref
+                              .read(requestFilterProvider.notifier)
+                              .state = filter.copyWith(subject: s),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              // Level chips
+              SizedBox(
+                height: 34,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: [
+                    _FilterChip(
+                      label: 'All Levels',
+                      isSelected: filter.educationLevel == null,
+                      color: AppTheme.secondaryColor,
+                      onTap: () => ref
+                          .read(requestFilterProvider.notifier)
+                          .state = filter.copyWith(
+                          educationLevel: null),
+                    ),
+                    const SizedBox(width: 8),
+                    ...levels.map(
+                          (l) => Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: _FilterChip(
+                          label: l,
+                          isSelected: filter.educationLevel == l,
+                          color: AppTheme.secondaryColor,
+                          onTap: () => ref
+                              .read(requestFilterProvider.notifier)
+                              .state = filter.copyWith(
+                              educationLevel: l),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (!filter.isEmpty) ...[
+                const SizedBox(height: 6),
+                TextButton.icon(
+                  onPressed: () => ref
+                      .read(requestFilterProvider.notifier)
+                      .state = const RequestFilter(),
+                  icon: const Icon(Icons.clear, size: 14),
+                  label: const Text('Clear filters',
+                      style: TextStyle(fontSize: 12)),
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
                 ),
               ],
-            ),
-          );
-        }
-
-        return RefreshIndicator(
-          onRefresh: () async =>
-              ref.invalidate(studentRequestsProvider),
-          child: ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: requests.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 10),
-            itemBuilder: (_, i) =>
-                StudentRequestCard(request: requests[i]),
+            ],
           ),
-        );
-      },
+        ),
+        const Divider(height: 1),
+
+        // ── Results ─────────────────────────────────────────────────
+        Expanded(
+          child: requestsAsync.when(
+            loading: () => const ShimmerList(count: 5),
+            error: (e, _) => Center(child: Text('Error: $e')),
+            data: (requests) {
+              if (requests.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.inbox_outlined,
+                          size: 64,
+                          color: theme.colorScheme.onSurface
+                              .withOpacity(0.3)),
+                      const SizedBox(height: 16),
+                      Text(
+                        filter.isEmpty
+                            ? 'No student requests yet'
+                            : 'No requests match your filters',
+                        style: theme.textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        filter.isEmpty
+                            ? 'When students post learning requests\nthey will appear here.'
+                            : 'Try adjusting the filters above.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: theme.colorScheme.onSurface
+                                .withOpacity(0.5),
+                            fontFamily: 'Poppins'),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              return RefreshIndicator(
+                onRefresh: () async =>
+                    ref.invalidate(studentRequestsProvider),
+                child: ListView.separated(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: requests.length,
+                  separatorBuilder: (_, __) =>
+                  const SizedBox(height: 10),
+                  itemBuilder: (_, i) =>
+                      StudentRequestCard(request: requests[i]),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─── Filter chip ──────────────────────────────────────────────────────────────
+
+class _FilterChip extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final Color color;
+
+  const _FilterChip({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+    this.color = AppTheme.primaryColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding:
+        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? color
+              : theme.colorScheme.onSurface.withOpacity(0.07),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            fontFamily: 'Poppins',
+            color: isSelected
+                ? Colors.white
+                : theme.colorScheme.onSurface.withOpacity(0.6),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -468,8 +629,8 @@ class _ProfileCompletenessCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppTheme.warningColor.withOpacity(0.1),
         borderRadius: BorderRadius.circular(16),
-        border:
-        Border.all(color: AppTheme.warningColor.withOpacity(0.3)),
+        border: Border.all(
+            color: AppTheme.warningColor.withOpacity(0.3)),
       ),
       child: Row(
         children: [
@@ -488,8 +649,8 @@ class _ProfileCompletenessCard extends StatelessWidget {
           TextButton(
             onPressed: () =>
                 context.push(AppRoutes.tutorProfileEdit),
-            child:
-            const Text('Complete', style: TextStyle(fontSize: 12)),
+            child: const Text('Complete',
+                style: TextStyle(fontSize: 12)),
           ),
         ],
       ),

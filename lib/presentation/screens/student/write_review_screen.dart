@@ -31,6 +31,32 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
     super.dispose();
   }
 
+  Future<void> _recalculateTutorRating(String tutorDocId) async {
+    final firestore = ref.read(firestoreProvider);
+
+    final reviews = await firestore
+        .collection(AppConstants.reviewsCollection)
+        .where('tutorId', isEqualTo: widget.tutorId)
+        .where('isVisible', isEqualTo: true)
+        .get();
+
+    final totalReviews = reviews.docs.length;
+    final avgRating = totalReviews == 0
+        ? 0.0
+        : reviews.docs
+        .map((d) => (d.data()['rating'] as num).toDouble())
+        .reduce((a, b) => a + b) /
+        totalReviews;
+
+    await firestore
+        .collection(AppConstants.tutorsCollection)
+        .doc(tutorDocId)
+        .update({
+      'rating': double.parse(avgRating.toStringAsFixed(2)),
+      'totalReviews': totalReviews,
+    });
+  }
+
   Future<void> _submit() async {
     if (_rating == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -45,8 +71,19 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
       final user = ref.read(currentUserProvider)!;
       final firestore = ref.read(firestoreProvider);
 
+      // Find correct tutor document
+      final tutorQuery = await firestore
+          .collection(AppConstants.tutorsCollection)
+          .where('userId', isEqualTo: widget.tutorId)
+          .limit(1)
+          .get();
+
+      final tutorDocId = tutorQuery.docs.isNotEmpty
+          ? tutorQuery.docs.first.id
+          : widget.tutorId;
+
       // Save review
-      final reviewRef = await firestore
+      await firestore
           .collection(AppConstants.reviewsCollection)
           .add({
         'tutorId': widget.tutorId,
@@ -59,26 +96,12 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
         'createdAt': FieldValue.serverTimestamp(),
       });
 
-      // Update tutor rating (transaction)
-      await firestore.runTransaction((tx) async {
-        final tutorRef = firestore
-            .collection(AppConstants.tutorsCollection)
-            .doc(widget.tutorId);
-        final tutorDoc = await tx.get(tutorRef);
-        final data = tutorDoc.data()!;
-        final totalReviews = (data['totalReviews'] as int? ?? 0) + 1;
-        final currentRating = (data['rating'] as num?)?.toDouble() ?? 0.0;
-        final newRating =
-            ((currentRating * (totalReviews - 1)) + _rating) / totalReviews;
-
-        tx.update(tutorRef, {
-          'rating': newRating,
-          'totalReviews': totalReviews,
-        });
-      });
+      // Recalculate from scratch — handles manual deletions too
+      await _recalculateTutorRating(tutorDocId);
 
       ref.invalidate(reviewsByTutorProvider(widget.tutorId));
       ref.invalidate(tutorByIdProvider(widget.tutorId));
+      ref.invalidate(currentTutorProfileProvider);
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -89,7 +112,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
       );
       context.pop();
     } catch (e) {
-      setState(() => _isSubmitting = false);
+      if (mounted) setState(() => _isSubmitting = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to submit review: $e'),
@@ -117,7 +140,8 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
                   children: [
                     CircleAvatar(
                       radius: 36,
-                      backgroundColor: AppTheme.primaryColor.withOpacity(0.15),
+                      backgroundColor:
+                      AppTheme.primaryColor.withOpacity(0.15),
                       child: Text(
                         tutor.fullName[0].toUpperCase(),
                         style: const TextStyle(
@@ -130,8 +154,10 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
                     const SizedBox(height: 12),
                     Text(tutor.fullName,
                         style: Theme.of(context).textTheme.titleLarge),
-                    Text(tutor.subjects.take(2).join(', '),
-                        style: const TextStyle(color: AppTheme.grey500)),
+                    Text(
+                      tutor.subjects.take(2).join(', '),
+                      style: const TextStyle(color: AppTheme.grey500),
+                    ),
                   ],
                 ),
                 loading: () => const SizedBox(height: 80),
@@ -160,7 +186,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
                 const SizedBox(height: 8),
                 Text(
                   _ratingLabel(_rating),
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: AppTheme.warningColor,
                     fontWeight: FontWeight.w600,
                     fontSize: 15,
@@ -173,8 +199,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
               AppTextField(
                 controller: _commentCtrl,
                 label: 'Your Review',
-                hintText:
-                    'Share your experience with this tutor...',
+                hintText: 'Share your experience with this tutor...',
                 maxLines: 5,
                 validator: (v) {
                   if (v == null || v.trim().length < 20) {
